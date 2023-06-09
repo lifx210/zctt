@@ -11,7 +11,7 @@ file_path = '../data/'
 # 配置用户名和密码
 userInfo = {
     'username': 'admin',
-    'password': 'Zcxc@2016#A',
+    'password': 'xxxxx',
 
     # 以下两项不需要更改
     'cginame': 'login.cgi',
@@ -20,7 +20,7 @@ userInfo = {
 
 
 # 配置短信接收号码
-phone_num = {'ph1': '13916716564', 'ph2': '135016943342'}
+phone_num = {'ph1': '139xxxxxxxx', 'ph2': '139xxxxxxxx'}
 
 
 # 配置cgi菜单
@@ -46,7 +46,7 @@ SmsInof = {'phone_user' : 'xljc',
            'phone_license' : '4c0e00def6fddc5fd8d2ee3521dbd8f7',
            'phone_systeminfo' : '信令监测系统',
            'phone_srctermid' : 2600,
-           'phone_url' : 'http://10.222.24.89:41690/services/SMSService?wsdl',
+           'phone_url' : 'http://IP:Port/services/SMSService?wsdl',
 }
 
 
