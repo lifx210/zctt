@@ -7,7 +7,7 @@ import sys
 import json
 import pyodbc
 import logging
-import subprocess
+import commands
 import requests
 import threading
 from datetime import datetime
@@ -32,6 +32,9 @@ start_time = datetime.strftime(local_time, '%Y-%m-%d %H:%M')
 file_name = 'sdainfo_' + time_str + '.dat'
 db_name = 'monitor'
 table_name = 'noc_sda'
+
+# 定义告警信息列表
+Sms_List = []
 
 
 def InsertMsg(msg, db_name, table_name):
@@ -66,7 +69,7 @@ def InsertMsg(msg, db_name, table_name):
 
 def GetSdaInfo(RequestUrl, ip, url, sessionid):
     '''通过Class类获取每一项指标'''
-    sdaObjetc = SDA_class(RequestUrl, ip, url, sessionid, requestHeader)
+    sdaObjetc = SDA_class(RequestUrl, ip, url, Sms_List, sessionid, requestHeader)
     # system_general_list = sdaObjetc.system_general()
     # system_time_list = sdaObjetc.system_time()
     # sdtp_Config_list = sdaObjetc.sdtp_Config()
@@ -106,16 +109,12 @@ def getLoginSessionId(ip, url):
         GetSdaInfo(RequestUrl, ip, url, sessionid)
     else:
         logging.error(' >>> '.join([ip, 'Connect Fild!']))
-
-        '''
-        此处告警触发存在问题，待排查
-        '''
-        smsSend.perfect_sms('[SmsServer:10.221.231.68]: The SDA %s Web Connect Fild!' %(ip))
+        Sms_List.append('SDA %s Web Connect Fild!' %(ip))
 
 
 def CheckIp(ip):
     '''检测ip状态'''
-    ret = subprocess.getstatusoutput('ping -c 1 ' + ip)
+    ret = commands.getstatusoutput('ping -c 1 ' + ip)
     if ret[0] == 0:
         statusCode = 1
     else:
@@ -134,7 +133,7 @@ def ReadFile(file_name):
                 ip_list.append(ip)
             else:
                 logging.error(ip + ' >>> Down')
-                smsSend.perfect_sms('[SmsServer:10.221.231.68]: The SDA %s is Down!' %(ip))
+                Sms_List.append('SDA %s is Down!' %(ip))
     return ip_list
 
 
@@ -153,8 +152,12 @@ def main():
         t1 = threading.Thread(target=getLoginSessionId, args=(ip, url))
         t1.start()
         t1.join()
-
+        
     logging.info('WriteFileName >>> [{}]'.format(os.path.abspath(file_name)))
+
+    # 下发短信
+    smsInfo = ';\n'.join(Sms_List)
+    smsSend.perfect_sms('[SmsServer:10.221.231.68]: \n' + smsInfo)
 
 
 if __name__ == '__main__':
@@ -162,3 +165,5 @@ if __name__ == '__main__':
     sys.setdefaultencoding( "utf-8" )
     smsSend = Encap_Sms()
     main()
+
+    
