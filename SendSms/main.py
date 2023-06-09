@@ -56,7 +56,6 @@ SendMQ_xml = '''<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap
                 </soapenv:Envelope>'''
 
 
-
 class Encap_Sms(object):
 
     def __init__(self, phone_msgcontent):
