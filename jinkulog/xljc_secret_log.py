@@ -186,3 +186,5 @@ if __name__ == '__main__':
                 nomingan = '|'.join(nomingan_touble)
                 f3.write(nomingan + '\n')
                 logging.info(nomingan)
+
+
