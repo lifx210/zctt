@@ -16,10 +16,10 @@ const (
   smsUrl = "http://IP:PORT/services/SMSService?wsdl"
 	xmlHeader  = `<?xml version='1.0' encoding='UTF-8'?>` + "\n"
 	username   = "xljc"
-	password   = "JNpzJzd2"
+	password   = "J****2"
 	srctermid  = 2600
 	systeminfo = "信令监测系统"
-	licence    = "4c0e00def6fddc5fd8d2ee3521dbd8f7"
+	licence    = "4c0e****d8f7"
 )
 
 // 定义请求xml结构体
@@ -141,8 +141,7 @@ func xmlTEncryption(xmlStr string) (encStr *string) {
 
 func main() {
 	// 调用flag函数输出命令行参数提示
-	// phonestr, alarmstr := flagInfo()
-	phonestr, alarmstr := "13916716564", "test123"
+	phonestr, alarmstr := flagInfo()
 	if len(phonestr) == 0 {
 		fmt.Println("Error: The Phone Number is Null")
 		return
