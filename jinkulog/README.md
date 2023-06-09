@@ -2,7 +2,7 @@
 金库日志处理
 
 # SRDH
-sybase iq
+sybiq
 
 # XLJC
 mysql
