@@ -42,8 +42,8 @@ requestHeader = {
 
 # 配置短信接口参数
 SmsInof = {'phone_user' : 'xljc',
-           'phone_password' : 'JNpzJzd2',
-           'phone_license' : '4c0e00def6fddc5fd8d2ee3521dbd8f7',
+           'phone_password' : 'J****2',
+           'phone_license' : '4c0e00****bd8f7',
            'phone_systeminfo' : '信令监测系统',
            'phone_srctermid' : 2600,
            'phone_url' : 'http://IP:Port/services/SMSService?wsdl',
