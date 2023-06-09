@@ -1,0 +1,32 @@
+*/5 * * * * /home/c7mon/bin/check_webclient_more.sh /home/c7mon >/home/c7mon/log/check_webclient_more.sh.log 2>&1
+#5 * * * * /home/c7mon/bin/jt_report_doubt_number.sh > /home/c7mon/data/jt_report_doubt_number.sh.log 2>&1
+#6 * * * * /home/c7mon/bin/jt_report_doubt_stat.sh > /home/c7mon/data/jt_report_doubt_stat.sh.log 2>&1
+1 * * * * /home/c7mon/bin/jt_interface_clean.sh > /home/c7mon/data/jt_interface_clean.sh.log 2>&1
+*/5 * * * * /home/c7mon/bin/jt_ftp_check.sh > /home/c7mon/data/jt_ftp_check.sh.log 2>&1
+*/6 * * * * /home/c7mon/bin/jt_ftp_check1.sh > /home/c7mon/data/jt_ftp_check1.sh.log 2>&1
+#*/5 * * * * /home/c7mon/bin/check_srdhinf.sh 10.221.8.221 >/home/c7mon/log/check_srdhinf.sh.log 2>&1
+#30 * * * * /home/c7mon/bin/check_monint.sh -i 10.221.8.221 >/home/c7mon/log/check_monint.sh.log 2>&1
+
+0 8 * * * /home/c7mon/bin/check_addblack_fail.sh 10.221.8.221 >/home/c7mon/log/check_addblack_fail.log 2>&1
+0 20 * * * /home/c7mon/bin/check_addblack_fail.sh 10.221.8.221 >/home/c7mon/log/check_addblack_fail.log 2>&1
+
+30 9-22 * * * /home/c7mon/bin/check_yiyang_log.sh >/home/c7mon/log/check_yiyang_log.sh.log 2>&1
+
+#add by genghb for black_stat
+20 16 * * * /home/c7mon/bin/black_stat/black_name_stat.sh >/home/c7mon/log/black_name_stat.sh.log 2>&1
+
+#add by genghb for wj_block
+*/1 * * * * /home/c7mon/bin/block/crt_wj_block_files.sh /home/c7mon >>/home/c7mon/log/crt_wj_block_files.sh.log 2>&1
+#56 * * * * /home/c7mon/bin/block/crt_wj_block_files.sh /home/c7mon >>/home/c7mon/log/crt_wj_block_files.sh.log 2>&1
+
+0 0 1,8,16,24 * * mv /home/c7mon/log/crt_wj_block_files.sh.log /home/c7mon/log/crt_wj_block_files.sh.log.bak
+
+##check_monint_status##
+57,3,9,15,21,27,33,39,45,51 * * * * /home/c7mon/bin/check_monint_dead.sh >>/home/c7mon/log/check_monint_dead.sh.log 2>&1
+
+## block_test
+0 9 * * * /home/c7mon/bin/block/crt_block_test_number_file.sh /home/c7mon 60 >/home/c7mon/log/crt_block_test_number_file.sh.log 2>&1
+
+##IMS_UPLOAD###
+#*/5 * * * * /zcdata/srdh_rename/srdh_rename_all.sh 210 021 >/home/c7mon/log/srdh_rename.log 2>&1
+
