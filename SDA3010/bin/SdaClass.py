@@ -99,7 +99,7 @@ class SDA_class(object):
                     link_status = 'alarm'
                     link_alm.append(list(ret.items())[n][0][:3].upper())
                     if n == 3:
-                        smsSend.perfect_sms('[SmsServer:10.221.231.68]: The SDA {} [linkNum:{} >>> linkAlm:{}]'.format(self.ip, link_num, '_'.join(link_alm).upper()))
+                        self.Sms_List.append('SDA {} [linkNum:{} >>> linkAlm:{}]'.format(self.ip, link_num, '_'.join(link_alm).upper()))
                 n += 1
             link_alm = '_'.join(link_alm)
             data.append([link_num, link_status, link_alm])
