@@ -1,9 +1,5 @@
 #!/usr/local/bin/ python
 # -*- coding: utf-8 -*-
-# @Time : 2022/10/11 14:55
-# @Author : lifx210
-# @File : main.py
-# @Site : 获取SDA3010设备和链路信息、写文件、入库和链路告警
 
 
 import os
