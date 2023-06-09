@@ -1,0 +1,7 @@
+# openEuler系统
+- include_tasks: openEuler.yml
+  when: ansible_distribution in ['openEuler']
+
+# RedHat系统
+- include_tasks: centos.yml
+  when: ansible_distribution in ['CentOS', 'redhat']

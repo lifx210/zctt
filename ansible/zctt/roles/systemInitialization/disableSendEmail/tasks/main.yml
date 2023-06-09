@@ -1,0 +1,5 @@
+- name: 禁止定时任务向发送邮件
+  lineinfile:
+    path: /etc/crontab
+    regexp: '^MAILTO='
+    line: MAILTO=""

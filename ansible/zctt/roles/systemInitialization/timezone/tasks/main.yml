@@ -1,0 +1,4 @@
+- name: 修改系统时区
+  shell: |
+    mv /etc/localtime /etc/localtime.bak
+    ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

@@ -1,0 +1,15 @@
+# 新增用户列表
+user_list: [
+  { user: 'zc', password: 'zcxc123' },
+  { user: 'gonglicheng', password: 'xinw@2019#A' },
+  { user: 'yuansong', password: 'xinw@2019#A' },
+  { user: 'lifengxiang', password: 'xinw@2019#A' },
+  { user: 'boco4a', password: 'BCli@2022' },
+  { user: 'wangguan', password: 'Awh9_k3ip' },
+  { user: 'jtzcglpt', password: 'EC7eX#@690' },
+  { user: 'wgxtb', password: 'w3i5N*7#' },
+  { user: 'weihu', password: 'w3i5N*7#' },
+]
+
+# 允许sudoer用户列表
+sudoer_user_list: ['zc', 'wgxtb', 'weihu', 'boco4a', 'gonglicheng']

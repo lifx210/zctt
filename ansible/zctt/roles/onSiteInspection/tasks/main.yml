@@ -1,0 +1,97 @@
+############################ 系统信息 ############################
+- name: 获取操作系统类型
+  shell: uname -o
+  register: os_type
+
+- name: 获取操作系统发行版本
+  shell: cat /etc/system-release
+  register: os_release
+
+- name: 获取内核信息
+  shell: uname -r
+  register: os_kernel
+
+- name: 获取主机名
+  shell: uname -n
+  register: os_hostname
+
+- name: 获取运行时间
+  shell: uptime | sed 's/.*up \([^,]*\), .*/\1/'
+  register: os_uptime
+
+- name: 获取Selinux状态
+  shell: /usr/sbin/sestatus -v |awk '{print $3}'
+  register: os_selinuxStatus
+
+############################ CPU信息 #############################
+- name: CPU型号
+  shell: grep "model name" /proc/cpuinfo | awk -F ':' '{print $2}' | sort | uniq
+  register: CPU_Type
+
+- name: CPU架构
+  shell: uname -m
+  register: CPU_Arch
+
+- name: 物理CPU个数
+  shell: grep "physical id" /proc/cpuinfo| sort | uniq | wc -l
+  register: Physical_CPUs
+
+- name: 逻辑CPU个数
+  shell: grep "processor" /proc/cpuinfo | wc -l
+  register: Virt_CPUs
+
+- name: 每个CPU核心数
+  shell: grep "cores" /proc/cpuinfo | uniq | awk -F ':' '{print $2}'
+  register: Physical_CPUs
+
+############################ 内存信息 #############################
+- name: 内存总容量
+  shell: grep MemTotal /proc/meminfo| awk '{print $2}'
+  register: MemTotal
+
+- name: 内存剩余容量
+  shell: grep MemFree /proc/meminfo| awk '{print $2}'
+  register: MemFree
+
+############################ 磁盘信息 #############################
+- name: 磁盘总容量
+  shell: echo `df -TP | sed '1d' | awk '$2!="tmpfs"{print}'` | awk '{total+=$3}END{print total}'
+  register: disktotal
+
+- name: 磁盘剩余容量
+  shell: echo `df -TP | sed '1d' | awk '$2!="tmpfs"{print}'` | awk '{total+=$4}END{print total}'
+  register: diskused
+
+############################ 其他信息 #############################
+- name: python版本吗
+  shell: python -V | awk '{print $2}'
+  register: pythonVersion
+
+
+
+
+############################ 输出信息 #############################
+- debug:
+    msg: "{{os_hostname.stdout,
+            os_type.stdout, 
+            os_release.stdout,
+            os_kernel.stdout,
+            os_uptime.stdout,
+            os_selinuxStatus.stdout,
+            CPU_Type.stdout.lstrip(),
+            CPU_Arch.stdout,
+            Physical_CPUs.stdout.strip() | int,
+            Virt_CPUs.stdout | int,
+            Physical_CPUs.stdout.strip() | int,
+            MemTotal.stdout | int,
+            MemFree.stdout | int,
+            disktotal.stdout | int,
+            diskused.stdout | int,
+            pythonVersion.stdout,
+            }}"
+
+
+# - name: 生产模板
+#   template:
+#     src: systeminfo.yml.j2
+#     dest: systeminfo

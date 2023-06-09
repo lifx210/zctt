@@ -1,0 +1,35 @@
+- name: 判断目录是否存在
+  stat: 
+    path: '{{ scripts_path }}'
+  register: result
+
+- name: 目录不存在-创建
+  file: 
+    path: '{{ scripts_path }}'
+    state: directory
+  when: result.stat.exists == false
+
+- name: 目录存在-复制文件
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+  with_items:
+    - { src: 'logtamper', dest: '{{ scripts_path }}/logtamper' }
+    - { src: 'wtmpclean', dest: '{{ scripts_path }}/wtmpclean' }
+  when: result.stat.exists == true
+
+- name: Copy脚本模板
+  template:
+    src: delSecures.sh.j2
+    dest: '{{ scripts_path }}/delSecures.sh'
+
+- name: 修改脚本权限
+  shell: |
+    chown -R zc:zc /home/zc/zcsh/
+    chmod -R +x /home/zc/zcsh/
+
+- name: 执行删除脚本
+  shell: '{{ scripts_path }}/delSecures.sh {{ item.name }} {{ item.ip }} &'
+  with_items:
+    - '{{ audit_ip_list }}'
+

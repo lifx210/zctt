@@ -1,0 +1,33 @@
+- name: 检测 ntpd 服务是否安装
+  shell: > 
+    systemctl status ntpd | grep active || echo "not be found"
+  register: ntp_server_installed
+
+- name: 检测 chronyd 服务是否安装
+  shell: > 
+    systemctl status chronyd | grep active || echo "not be found"
+  register: chronyd_server_installed
+
+- name: 安装 ntpd 服务
+  yum:
+    name: ntp
+    state: latest
+  when: ntp_server_installed.stdout == 'not be found'
+
+- name: 修改 ntp.conf 文件
+  lineinfile:
+    path: /etc/ntp.conf
+    line: server {{ ntp_server }}
+
+- name: 禁用 chrony 服务
+  service:
+    name: chronyd
+    state: stopped
+    enabled: no
+  when: '"active" in chronyd_server_installed.stdout'
+
+- name: 启用 ntpd 服务
+  service:
+    name: ntpd
+    state: started
+    enabled: yes

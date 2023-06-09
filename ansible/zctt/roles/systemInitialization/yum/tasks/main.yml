@@ -1,0 +1,24 @@
+- name: 备份原有 yum 源
+  shell: mv /etc/yum.repos.d /etc/yum.repos.d_bak$(date '+%Y%m%d%H%M')
+
+- name: 创建新的 yum 目录
+  file:
+    path: /etc/yum.repos.d
+    state: directory
+
+- name: 复制 openEuler-yum 源文件
+  template:
+    src: openEuler.repo.j2
+    dest: /etc/yum.repos.d/openEuler.repo
+  when: ansible_distribution == 'openEuler'
+
+- name: 复制 redhat-yum 源文件
+  template:
+    src: redhat.repo.j2
+    dest: /etc/yum.repos.d/redhat.repo
+  when: ansible_distribution in ['redhat', 'CentOS'] 
+
+- name: 初始化 yum
+  shell: | 
+    yum clean all
+    yum makecache

@@ -1,0 +1,54 @@
+- name: 检测 ntpd 服务是否安装
+  shell: > 
+    systemctl status ntpd | grep active || echo "not be found"
+  register: ntp_server_installed
+
+- name: 禁用 ntpd 服务
+  service:
+    name: ntpd
+    state: stopped
+    enabled: no
+  when: '"active" in ntp_server_installed.stdout'
+
+- name: 上传并解压 xntp 压缩包
+  unarchive:
+    src: xntp.tar.gz
+    dest: /home/zc
+    group: zc
+    owner: zc
+    mode: 0755
+
+- name: 检查 ntpd.conf 文件是否存在,
+  file:
+    path: /etc/ntpd.conf
+    state: touch
+    mode: 0755
+
+- name: 创建 ntp.drift 目录
+  file:
+    path: /etc/ntp.drift
+    state: directory
+
+
+- name: 添加 ntp 配置
+  lineinfile:
+    path: /etc/ntpd.conf
+    line: '{{ item }}'
+    state: present
+  with_items:
+    - 'server {{ ntp_server }}'
+    - 'driftfile /etc/ntp.drift'
+    - 'restrict 127.0.0.1'
+    - 'restrict default notrust nomodify nopeer noquery notrap'
+    - 'restrict {{ ntp_server }} nomodify notrap noquery'
+
+- name: 启动 ntp 程序
+  shell: /home/zc/xntp/bin/xntpd -c /etc/ntp.conf -f /etc/ntp.drift -l /home/zc/xntp/log/ntp.log
+  ignore_errors: true
+
+- name: 添加到 rc.local
+  lineinfile:
+    path: /etc/rc.d/rc.local
+    line: /home/zc/xntp/bin/xntpd -c /etc/ntp.conf -f /etc/ntp.drift -l /home/zc/xntp/log/ntp.log
+    state: present
+    mode: 0777

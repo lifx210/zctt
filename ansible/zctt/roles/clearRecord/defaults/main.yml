@@ -1,0 +1,8 @@
+# 文件存放目录
+scripts_path: /home/zc/zcsh/scripts
+
+# 稽核用户和IP
+audit_ip_list: [
+  { name: 'zc', ip: '10.221.128.59'}, 
+  { name: 'root', ip: '10.221.231.1'}
+  ]

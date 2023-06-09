@@ -1,0 +1,81 @@
+- name: 检查 rsyslog 服务是否安装
+  shell: systemctl status rsyslog | grep active || echo "not be found"
+  register: rsyslog_installed
+
+- name: 安装 rsyslog 服务
+  yum:
+    name: rsyslog
+    state: latest
+  when: rsyslog_installed.stdout == 'not be found'
+
+- block:
+  - name: 配置记录安全事件日志1-/var/log/messages
+    lineinfile:
+      path: /etc/rsyslog.conf
+      regexp: '^{{ item }}'
+      line: '{{ item }}        /var/log/messages'
+      state: present
+    with_items:
+      - 'local7.*'
+      - 'kern.debug'
+      - 'kern.warning'
+      - 'authpriv.none'
+      - 'mail.none'
+      - 'daemon.notice'
+
+  - name: 配置记录安全事件日志2-/var/log/messages
+    lineinfile:
+      path: /etc/rsyslog.conf
+      regexp: '^\*.{{ item }}'
+      line: '*.{{ item }}        /var/log/messages'
+      state: present
+    with_items:
+      - 'emerg'
+      - 'info;mail.none;authpriv.none;cron.none'
+
+  - name: 配置记录安全事件日志3-/var/log/cron
+    lineinfile:
+      path: /etc/rsyslog.conf
+      regexp: '^{{ item }}'
+      line: '{{ item }}        /var/log/cron'
+      state: present
+    with_items:
+      - 'cron.*'
+
+  - name: 配置记录安全事件日志4-/var/log/authlog
+    lineinfile:
+      path: /etc/rsyslog.conf
+      regexp: '^{{ item }}'
+      line: '{{ item }}        /var/log/authlog'
+      state: present
+    with_items:
+      - 'auth.info'
+      - 'authpriv.info'
+
+  - name: 配置 rsyslog
+    lineinfile:
+      path: /etc/rsyslog.conf
+      line: '{{ item }}'
+      state: present
+    with_items:
+      - '*.warning  @10.221.15.103'
+      - 'auth.info  @10.221.15.103'
+      - '*.warning  @10.221.129.21'
+      - 'auth.info  @10.221.129.21'
+      - 'authpriv.* @10.11.77.245:5006'
+
+  - name: 启动 rsyslog 服务
+    service:
+      name: rsyslog
+      state: started
+      enabled: yes
+    when: '"active" in rsyslog_installed.stdout'
+
+  - name: 修改文件权限
+    shell: chmod 0640 {{ item }}
+    with_items:
+      - /var/log/messages
+      - /var/log/authlog
+      - /var/log/cron
+      - /var/log/secure
+    ignore_errors: true

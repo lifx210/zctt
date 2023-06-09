@@ -1,0 +1,18 @@
+# 新增设备系统初始化
+- hosts:
+  - newLinux
+
+  roles:
+  # - systemInitialization/selinux
+  # - systemInitialization/firewalld
+  # - systemInitialization/timezone
+  # # - systemInitialization/yum
+  # - systemInitialization/user
+  # - systemInitialization/disableSwap
+  # - systemInitialization/disableSendEmail
+  # - systemInitialization/ntp
+  - systemInitialization/hegui
+  # - systemInitialization/rsyslog
+  # - systemInitialization/cronAllow
+
+

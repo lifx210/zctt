@@ -1,0 +1,340 @@
+- name: 格式化备份时间
+  shell: date '+%Y%m%d%H%M'
+  register: back_time
+
+- name: 备份文件
+  shell: \cp {{ item }} {{ item }}_bak{{ back_time.stdout }}
+  with_items:
+    - '/etc/passwd'
+    - '/etc/shadow'
+    - '/etc/group'
+    - '/etc/sysctl.conf'
+    - '/etc/ssh/sshd_config'
+    - '/etc/login.defs'
+    - '/etc/pam.d/system-auth'
+    - '/etc/profile'
+    - '/etc/bashrc'
+  ignore_errors: true
+
+
+
+# 配置项名称:检查帐号文件权限设置
+- name: 修改帐号文件权限设置
+  shell: |
+    chmod 0644 /etc/passwd
+    chmod 0400 /etc/shadow
+    chmod 0644 /etc/group
+
+
+# 配置项名称:禁止ipv4和ipv6的所有接口icmp重定向
+- name: 禁止ipv4和ipv6的所有接口icmp重定向
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: '^{{ item }}'
+    line: '{{ item }} = 0'
+    state: present
+  with_items:
+    - 'net.ipv4.conf.all.accept_redirects'
+    - 'net.ipv6.conf.all.accept_redirects'
+
+
+# 配置项名称:删除或锁定无关账号
+- name: 删除或锁定无关账号
+  shell: usermod -L {{ item }}
+  with_items:
+    - '{{ del_users }}'
+  ignore_errors: true
+
+
+# 配置项名称:检查登录提示-设置ssh警告Banner
+- block:
+  - name: 修改 /etc/ssh/sshd_config文件中的Banner参数
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^Banner'
+      line: Banner /etc/ssh_banner
+      state: present
+  
+  - name: 创建 Banner 和 motd 文件
+    file: 
+      path: '{{ item }}'
+      state: touch
+      mode: 0644
+    with_items:
+      - '/etc/ssh_banner'
+      - '/etc/motd'
+
+  - name: 修改 Banner 和 motd 文件
+    lineinfile:
+      path: '{{ item }}'
+      line: Authorized only. All activity will be monitored and reported
+    with_items:
+      - '/etc/ssh_banner'
+      - '/etc/motd'
+
+  - name: 重启 sshd 服务
+    service:
+      name: sshd
+      state: restarted
+  when: ansible_distribution in ['CentOS', 'RedHat']
+
+
+# 配置项名称:检查口令生存周期要求
+- block:
+  - name: 修改 PASS_MIN_LEN 参数
+    lineinfile:
+      path: /etc/login.defs
+      regexp: '^PASS_MIN_LEN'
+      line: PASS_MIN_LEN    8
+      state: present
+  
+  - name: 修改 PASS_MAX_DAYS 参数
+    lineinfile:
+      path: /etc/login.defs
+      regexp: '^PASS_MAX_DAYS'
+      line: PASS_MAX_DAYS   90
+      state: present
+
+  - name: 修改 PASS_MIN_DAYS 参数
+    lineinfile:
+      path: /etc/login.defs
+      regexp: '^PASS_MIN_DAYS'
+      line: PASS_MIN_DAYS   0
+      state: present
+
+  - name: 修改 PASS_WARN_AGE 参数
+    lineinfile:
+      path: /etc/login.defs
+      regexp: '^PASS_WARN_AGE'
+      line: PASS_WARN_AGE   7
+      state: present
+
+
+# 配置项名称:关闭nfs服务限制
+- block:
+  - name: 判断 nfs 是否安装-[redhat6及以下]
+    shell: >
+      chkconfig --list --level 3 | grep nfs || echo "not be found"
+    register: nfs_status
+    when: ansible_distribution_major_version <= 6 
+
+  - name: 判断 nfs 是否安装-[redhat7及以上]
+    shell: >
+      systemctl list-unit-files | grep nfs || echo "not be found"
+    register: nfs_status
+    when: ansible_distribution_major_version >= 7
+
+  - name: 关闭nfs服务
+    service:
+      name: nfs
+      state: stopped
+      enabled: no
+    when: nfs_status.stdout != 'not be found'
+
+
+# 配置项名称:禁止ctrl+alt+del
+- block:
+  - name: 禁止ctrl+alt+del-[redhat5]
+    lineinfile:
+      path: /etc/inittab
+      regexp: '^ca::ctrlaltdel:/sbin/shutdown'
+      line: #ca::ctrlaltdel:/sbin/shutdown -t3 -r now 
+      state: present
+    when: ansible_distribution_major_version < 6
+
+  - name: 禁止ctrl+alt+del-[redhat6]
+    lineinfile:
+      path: /etc/init/control-alt-delete.conf
+      regexp: '^exec /sbin/shutdown'
+      line: #exec /sbin/shutdown -r now "Control-Alt-Delete pressed" 
+      state: present
+    when: ansible_distribution_major_version ==  6
+
+  - name: 禁止ctrl+alt+del-[redhat7]
+    template:
+      src: ctrl-alt-del.target.j2
+      dest: /usr/lib/systemd/system/ctrl-alt-del.target
+    when: ansible_distribution_major_version >= 7
+
+
+# 配置项名称:检查是否存在空密码的帐户
+- block:
+  - name: 过滤存在空密码的账号
+    shell: "awk -F: '($2 == \"\") { print $1 }' /etc/shadow"
+    register: empty_users
+    ignore_errors: true
+
+  - name: 空密码账号设置密码
+    shell: 'echo {{ ansible_ssh_pass }} | passwd --stdin {{ item }}'
+    with_items:
+      - '{{ empty_users.stdout_lines }}'
+    ignore_errors: true
+    when: empty_users.stdout_lines != []
+
+
+# 配置项名称:检查口令策略设置是否符合复杂度要求
+- block:
+  - name: 修改密码复杂度-[redhat7及以上]
+    lineinfile:
+      path: /etc/pam.d/system-auth
+      regexp: '^password    requisite     pam_pwquality.so try_first_pass local_users_only'
+      line: 'password    requisite     pam_pwquality.so try_first_pass local_users_only enforce_for_root retry=3 minlen=8 minclass=3 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1'
+      state: present
+    when: ansible_distribution_major_version >= 7
+
+  - name: 修改密码复杂度-[redhat6及以下]
+    lineinfile:
+      path: /etc/pam.d/system-auth
+      regexp: '^password    requisite     pam_cracklib.so try_first_pass'
+      line: 'password    requisite     pam_cracklib.so try_first_pass retry=3 minlen=8 minclass=3 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1'
+      state: present
+    when: ansible_distribution_major_version < 7
+
+
+# 配置项名称:检查口令重复次数限制
+- name: 修改口令重复次数限制
+  lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password    sufficient    pam_unix.so'
+    line: 'password    sufficient    pam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=5'
+
+
+# 配置项名称:检查用户缺省UMASK
+- name: 修改用户缺省UMASK
+  replace:
+    path: '{{ item }}'
+    after: '0'
+    regexp: 'umask 0\d+'
+    replace: 'umask 027'
+  with_items:
+    - /etc/profile
+    - /etc/bashrc
+
+
+# 配置项名称: 检查是否设置登录超时
+- name: 设置登录超时
+  lineinfile:
+    path: /etc/profile
+    regexp: '^TMOUT'
+    line: 'export TMOUT=600'
+    state: present
+
+
+# 配置项名称:防syn攻击优化检查主机访问控制（IP限制）
+- block:
+  - name: 防syn攻击优化-hosts.deny
+    lineinfile:
+      path: /etc/hosts.deny
+      line: '{{ item }}'
+      state: present
+      create: yes
+    with_items:
+      - sshd:*
+      - sshd:10.10.10.:DENY
+
+  - name: 防syn攻击优化-hosts.allow
+    lineinfile:
+      path: /etc/hosts.allow
+      line: '{{ item }}'
+      state: present
+      create: yes
+    with_items:
+      - sshd:172.16.*.*
+      - sshd:10.*.*.*
+      - sshd:all:ALLOW
+
+
+# 配置项名称: 检查FTP配置-限制FTP用户登录后能访问的目录
+- block:
+  - name: 检查 ftp 配置文件是否存在
+    shell: ls /etc/vsftpd/vsftpd.conf || echo "file no find" 
+    register: ftp_file_exist
+
+  - name: 检查 ftpusers 文件是否存在
+    shell: ls /etc/vsftpd/ftpusers || echo "file no find"
+    register: ftpuser_file_exist
+
+  - name: 修改 FTP 配置
+    lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      regexp: '#{{ item }}'
+      line: '{{ item }}'
+      state: present
+    with_items:
+      - anonymous_enable=NO
+      - chroot_local_user=YES
+      - local_enable=YES
+      - local_umask=022
+      - xferlog_file=/var/log/xferlog
+      - ls_recurse_enable=YES
+    when: ftp_file_exist.stdout != 'file no find'
+
+  - name: 更改ftp警告Banner
+    lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      regexp: '^#ftpd_banner'
+      line: ftpd_banner="Authorized users only.All activity may be monitored and reported.
+      state: present
+    when: ftp_file_exist.stdout != 'file no find'
+
+  - name: 添加 root 用户到ftpusers文件
+    lineinfile:
+      path: /etc/vsftpd/ftpusers
+      line: '{{ item }}'
+    with_items:
+      - root
+    when: ftpuser_file_exist.stdout != 'file no find'
+
+
+
+
+
+# 配置项名称:检查是否关闭不必要服务
+- block:
+  - name: 检查server相关服务是否启动-[redhat6及以下]
+    shell: >
+      chkconfig --list | grep {{ item }} | awk -F ' ' '{print $5}' | grep on || echo "false"
+    register: services_enabled
+    with_items:
+      - '{{ services }}'
+    when: ansible_distribution_major_version < 7
+    
+  - name: 检查server相关服务是否启动-[redhat7及以上]
+    shell: >
+      systemctl list-unit-files | grep {{ item }} | awk -F ' ' '{print $2}' |grep enabled || echo "false"
+    register: services_enabled
+    with_items:
+      - '{{ services }}'
+    when: ansible_distribution_major_version >= 7
+
+  - name: 生成server检查结果列表
+    set_fact:
+      server_lists: '{{ server_lists + [[item.item, item.stdout]] }}'
+    with_items:
+      - '{{ services_enabled.results }}'
+
+  - name: server检查结果列表关闭相关服务
+    service:
+      name: '{{ item|first }}'
+      state: stopped
+      enabled: no
+    when: item|last == false
+    with_items:
+      - '{{ server_lists }}'
+
+# 配置项名称:检查是否存在UID为0的非root用户
+- block:
+  - name: 检查UID为0的非root用户
+    shell: > 
+      awk -F: '($3 == 0) { print $1 }' /etc/passwd |grep -v root
+    register: UID_userlist
+    ignore_errors: true
+  
+  - name: 删除UID为0的非root用户
+    shell: userdel -r {{ item }} --force >/dev/null 2>&1
+    ignore_errors: true
+    with_items:
+      - '{{ UID_userlist.stdout_lines }}'
+    when: UID_userlist.stdout_lines != []
+
+

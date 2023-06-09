@@ -1,0 +1,36 @@
+# 服务器巡检
+- hosts:
+  - all
+
+  roles: 
+  - onSiteInspection
+
+
+
+# 新增设备系统初始化
+- hosts:
+  - newLinux
+
+  roles:
+  - systemInitialization/selinux
+  - systemInitialization/firewalld
+  - systemInitialization/timezone
+  # - systemInitialization/yum
+  - systemInitialization/user
+  - systemInitialization/disableSwap
+  - systemInitialization/disableSendEmail
+  - systemInitialization/ntp
+  - systemInitialization/hegui
+  - systemInitialization/rsyslog
+  - systemInitialization/cronAllow
+
+
+
+
+# 清除操作记录
+- hosts:
+  - all
+
+  roles:
+  - clearRecord
+

@@ -1,0 +1,16 @@
+- name: 创建用户
+  user:
+    name: '{{ item.user }}'
+    password: "{{ '{{ item.password }}' | password_hash('sha512') }}"
+    groups: wheel
+    state: present
+  with_items: 
+    - '{{ user_list }}'
+
+- name: 用户加入sudoers权限
+  lineinfile:
+    path: /etc/sudoers
+    line: '{{ item }} 	ALL=(ALL) 	ALL'
+    state: present
+  with_items:
+    - '{{ sudoer_user_list }}'

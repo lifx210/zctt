@@ -1,0 +1,11 @@
+- name: 配置允许 crontabl 的用户
+  lineinfile:
+    path: /etc/cron.allow
+    line: '{{ item }}'
+    state: present
+    create: yes
+  with_items:
+    - zc
+    - dmp
+    - utrace
+    - weihu

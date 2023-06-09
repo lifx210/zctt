@@ -1,0 +1,7 @@
+# 服务器巡检
+- hosts:
+  - all
+
+  roles: 
+  - onSiteInspection
+  
