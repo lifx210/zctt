@@ -42,8 +42,8 @@ class AddMarkWork(object):
     system_name = '7号信令监测系统'                      # 系统中文名称
     province_code = '021'                               # 省公司代码
     environment_name = 'O'                              # 环境名
-    appId = '8237089f-c0ba-4cc3-be17-50a7d55c079b'      # 注册时分配的唯一标识
-    securityKey = '4fb1885720c0de684699460ad0a59238'    # key
+    appId = '8237089f-****-****-****-50a7d55c079b'      # 注册时分配的唯一标识
+    securityKey = '4fb1885720************d0a59238'    # 分配的key
     remote_path = '/xljcxt'                             # 文件上传路径
     local_path = '/zctt/iaap/service/download'          # 文件本地路径
 
