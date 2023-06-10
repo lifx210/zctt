@@ -1,4 +1,3 @@
-# zctt for shanghai ChinaMobile
 依赖 openEuler 22.03 LTS 系统制作 DMPP 程序运行环境
 
 # docker run
