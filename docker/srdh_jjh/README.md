@@ -1,4 +1,3 @@
-# zctt for shanghai ChinaMobile
 依赖 centos5 版本系统制作 srdh_jjh 程序运行环境
 
 # docker run
